@@ -97,7 +97,7 @@ const updateCurrentUserProfile = asyncHandler (async(req, res) =>{
             foundUser.password = req.body.password;
         }
 
-        const updateUser = await user.save();
+        const updateUser = await foundUser.save();
 
         res.json({
             _id: updateUser._id,
@@ -112,6 +112,56 @@ const updateCurrentUserProfile = asyncHandler (async(req, res) =>{
     }
 });
 
+
+const deleteUserById = asyncHandler(async(req, res) =>{
+    const foundUser = await user.findById(req.params.id);
+
+    if(foundUser){
+        if(foundUser.isAdmin){
+            res.status(400);
+            throw new Error('Can not delete admin user')
+            };
+
+            await foundUser.deleteOne({_id: foundUser._id});
+            res.json({message: 'User deleted successfully'});
+    }else{
+        res.status(404);
+        throw new Error('user not found')
+    }
+})
+
+
+const getUserById = asyncHandler(async(req, res) => {
+    const foundUser = await user.findById(req.params.id).select('-password');
+    if(foundUser){
+        res.json(foundUser)
+    }else{
+        res.status(404);
+        throw new Error('User not found')
+    }
+})
+
+
+const updateUserById = asyncHandler(async(req,res) => {
+    const foundUser = await user.findById(req.params.id);
+    if(foundUser){
+        foundUser.username = req.body.username || foundUser.username;
+        foundUser.email = req.body.email || foundUser.email;
+        foundUser.isAdmin = Boolean(req.body.isAdmin);
+
+        const updatedUser = await foundUser.save();
+        res.json({
+            _id: updatedUser._id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            isAdmin: updatedUser.isAdmin,
+            });
+    }else{
+        res.status(404);
+        throw new Error('user not found');
+    }
+})
+
 export {
     createUser, 
     loginUser, 
@@ -119,4 +169,7 @@ export {
     getAllUsers,
     getCurrentUserProfile,
     updateCurrentUserProfile,
+    deleteUserById,
+    getUserById,
+    updateUserById,
 }; 
